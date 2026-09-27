@@ -1,0 +1,52 @@
+set width to 60
+set height to 20
+set max_iterations to 15
+
+set y to 0
+while y < height
+  calculate y/height -> temp_y
+  calculate temp_y*2.4 -> temp_y2
+  calculate temp_y2-1.2 -> ci
+
+  set x to 0
+  while x < width
+    calculate x/width -> temp_x
+    calculate temp_x*3.0 -> temp_x2
+    calculate temp_x2-2.0 -> cr
+
+    set zr to 0.0
+    set zi to 0.0
+    set iter to 0
+    set escaped to 0
+
+    while iter < max_iterations
+      if escaped == 0
+        calculate zr*zr -> zr_sq
+        calculate zi*zi -> zi_sq
+
+        calculate zr_sq+zi_sq -> mag
+        if mag > 4.0
+          set escaped to 1
+
+        if escaped == 0
+          calculate zr_sq-zi_sq -> zr_diff
+          calculate zr_diff+cr -> zr_next
+
+          calculate 2.0*zr -> two_zr
+          calculate two_zr*zi -> two_zr_zi
+          calculate two_zr_zi+ci -> zi_next
+
+          set zr to zr_next
+          set zi to zi_next
+
+      calculate iter+1 -> iter
+
+    if escaped == 1
+      print " "
+    if escaped == 0
+      print "*"
+
+    calculate x+1 -> x
+
+  println ""
+  calculate y+1 -> y

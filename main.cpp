@@ -238,14 +238,14 @@ bytecode compile(string fin, istream& ifs){
         break;
       }
       case 7: {
-        auto [vn, va, vq] = parseBool(ln.erase(0, off + (sp / 2)));
+        auto [vn, va, vq] = parseBool(ln.erase(0, off));
         args.push_back(vn);
         args.push_back(va);
         args.push_back(vq);
         break;
       }
       case 8: {
-        auto [vn, va, vq] = parseBool(ln.erase(0, off + (sp / 2)));
+        auto [vn, va, vq] = parseBool(ln.erase(0, off));
         args.push_back(vn);
         args.push_back(va);
         args.push_back(vq);
