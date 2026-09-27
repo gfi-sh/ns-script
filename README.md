@@ -19,9 +19,8 @@ g++ main.cpp -o ns
 ```
 
 ## syntax
-example script demonstrating all of the functions/keywords currently in ns
 
-```
+```python
 set value1 to 0
 set value2 to 100
 
@@ -39,8 +38,10 @@ while value1 > value2
 
 println "done counting to 100"
 
-repeat 100:
+repeat 100
   print "A"
+
+println ""
 
 set u to ""
 prompt "enter your name: " -> u
@@ -48,13 +49,19 @@ prompt "enter your name: " -> u
 repeat 9
   print u
 
+println ""
+
 set number1 to 6
 set number2 to 2
 
 calculate number1/number2 -> number3
 
+print "Is 2.01 greater than "
+print number3
+println "?"
+
 if 2.01 > number3
-  print "yes"
+  println "yes"
 if number3 > 2.01
-  print "no"
+  println "no"
 ```

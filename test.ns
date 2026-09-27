@@ -18,6 +18,8 @@ println "done counting to 100"
 repeat 100
   print "A"
 
+println ""
+
 set u to ""
 prompt "enter your name: " -> u
 
