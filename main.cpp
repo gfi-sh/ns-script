@@ -14,7 +14,7 @@ using namespace std;
 using bytecode = vector<tuple<int, int, vector<any>>>;
 
 vector<string> keywords = {
-  "println", "print", "prompt", "repeat", "set", "increment", "while", "if"
+  "println", "print", "prompt", "repeat", "set", "increment", "while", "if", "calculate"
 };
 
 string f;
@@ -85,6 +85,85 @@ tuple<any, uint8_t, any> parseBool(string str){
   }
 
   return {parseExp(vz), operand, parseExp(vq)};
+}
+
+vector<any> parseMath(string str){
+  size_t arrowPos = str.find("->");
+  if(arrowPos != string::npos){
+    str = str.substr(0, arrowPos);
+  }
+  while(!str.empty() && isspace(str.front())) str.erase(0, 1);
+  while(!str.empty() && isspace(str.back())) str.pop_back();
+
+  string left, right;
+  char op = '\0';
+  int parenDepth = 0;
+
+  for(size_t i = str.length(); i > 0; --i){
+    char c = str[i - 1];
+    if(c == ')') parenDepth++;
+    else if(c == '(') parenDepth--;
+    else if(parenDepth == 0 && (c == '+' || c == '-')){
+      left = str.substr(0, i - 1);
+      op = c;
+      right = str.substr(i);
+      break;
+    }
+  }
+
+  if(op == '\0'){
+    for(size_t i = str.length(); i > 0; --i){
+      char c = str[i - 1];
+      if(c == ')') parenDepth++;
+      else if(c == '(') parenDepth--;
+      else if(parenDepth == 0 && (c == '*' || c == '/')){
+        left = str.substr(0, i - 1);
+        op = c;
+        right = str.substr(i);
+        break;
+      }
+    }
+  }
+
+  if(op == '\0'){
+    if(str.front() == '(' && str.back() == ')'){
+      return parseMath(str.substr(1, str.length() - 2));
+    }
+    return {parseExp(str)};
+  }
+
+  uint8_t opCode = 0;
+  if(op == '+') opCode = 1;
+  else if(op == '-') opCode = 2;
+  else if(op == '*') opCode = 3;
+  else if(op == '/') opCode = 4;
+
+  return {parseMath(left), opCode, parseMath(right)};
+}
+
+float solveMath(const vector<any>& vec, const map<string, any>& vars){
+  if(vec.size() == 1){
+    auto p = any_cast<pair<uint8_t, any>>(vec[0]);
+    uint8_t type = p.first;
+    if(type == 1) return stof(any_cast<string>(p.second));
+    else if(type == 2) return any_cast<float>(p.second);
+    else if(type == 3){
+      auto varVal = vars.at(any_cast<string>(p.second));
+      if(varVal.type() == typeid(string)) return stof(any_cast<string>(varVal));
+      else if(varVal.type() == typeid(float)) return any_cast<float>(varVal);
+      else if(varVal.type() == typeid(double)) return static_cast<float>(any_cast<double>(varVal));
+      else if(varVal.type() == typeid(int)) return static_cast<float>(any_cast<int>(varVal));
+      return 0.0f;
+    }
+  }
+  auto left = solveMath(any_cast<vector<any>>(vec[0]), vars);
+  uint8_t op = any_cast<uint8_t>(vec[1]);
+  auto right = solveMath(any_cast<vector<any>>(vec[2]), vars);
+  if(op == 1) return left + right;
+  else if(op == 2) return left - right;
+  else if(op == 3) return left * right;
+  else if(op == 4) return left / right;
+  return 0.0f;
 }
 
 bytecode compile(string fin, istream& ifs){
@@ -172,6 +251,13 @@ bytecode compile(string fin, istream& ifs){
         args.push_back(vq);
         break;
       }
+      case 9: {
+        auto [vn, off2] = spMatch(ln, off);
+        auto [va, off3] = spMatch(ln, off2 + 4);
+        args.push_back(parseMath(vn));
+        args.push_back(parseExp(va));
+        break;
+      }
     }
 
     cd.push_back({op, (sp / 2), args});
@@ -211,10 +297,23 @@ void exec(const bytecode& cd, size_t& pc){
     uint8_t op = any_cast<uint8_t>(args[1]);
     auto r = evalArg(args[2]);
 
+    auto tryParse = [](std::any& v){
+      if(v.type() == typeid(std::string)){
+        try{
+          size_t pos;
+          float f = stof(any_cast<const std::string&>(v), &pos);
+          if(pos == any_cast<const std::string&>(v).length()) v = f;
+        }catch(...){}
+      }
+    };
+
+    tryParse(l);
+    tryParse(r);
+
     if(l.type() == typeid(float) && r.type() == typeid(float)){
       return compareValues(any_cast<float>(l), any_cast<float>(r), op);
     }else if(l.type() == typeid(std::string) && r.type() == typeid(std::string)){
-      return compareValues(any_cast<const std::string&>(l), any_cast<const std::string&>(r), op);
+      return compareValues(any_cast<std::string>(l), any_cast<std::string>(r), op);
     }
     return false;
   };
@@ -270,7 +369,14 @@ void exec(const bytecode& cd, size_t& pc){
     }
     case 6: { // increment
       string name = any_cast<string>(any_cast<pair<uint8_t, any>>(args[0]).second);
-      float cur = vars.count(name) ? any_cast<float>(vars[name]) : 0.0f;
+      float cur = 0.0f;
+      if(vars.count(name)){
+        auto varVal = vars[name];
+        if(varVal.type() == typeid(float)) cur = any_cast<float>(varVal);
+        else if(varVal.type() == typeid(int)) cur = static_cast<float>(any_cast<int>(varVal));
+        else if(varVal.type() == typeid(double)) cur = static_cast<float>(any_cast<double>(varVal));
+        else if(varVal.type() == typeid(string)) cur = stof(any_cast<string>(varVal));
+      }
       vars[name] = cur + 1.0f;
       break;
     }
@@ -294,6 +400,12 @@ void exec(const bytecode& cd, size_t& pc){
         executeBlock(s_pc, e_pc);
       }
       pc = e_pc - 1;
+      break;
+    }
+    case 9: { // calculate
+      float res = solveMath(any_cast<vector<any>>(args[0]), vars);
+      string targetVar = any_cast<string>(any_cast<pair<uint8_t, any>>(args[1]).second);
+      vars[targetVar] = res;
       break;
     }
   }

@@ -19,6 +19,7 @@ g++ main.cpp -o ns
 ```
 
 ## syntax
+example script demonstrating all of the functions/keywords currently in ns
 
 ```
 set value1 to 0
@@ -44,6 +45,16 @@ repeat 100:
 set u to ""
 prompt "enter your name: " -> u
 
-repeat 9999999999999999999999999999999999999999999999
+repeat 9
   print u
+
+set number1 to 6
+set number2 to 2
+
+calculate number1/number2 -> number3
+
+if 2.01 > number3
+  print "yes"
+if number3 > 2.01
+  print "no"
 ```

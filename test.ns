@@ -1,18 +1,41 @@
-println "hey there buddy. yes you BUDDY"
-println "every time you say 67. i will get mad. don't say it."
+set value1 to 0
+set value2 to 100
 
-set anger to 0
+# comments on empty lines only
+while value1 > value2
+  # you MUST use double-spaced indents
+  increment value1
 
-while anger < 100
-  prompt "scream at me: " -> u
+  # ns doesn't support string concatination
+  print "The current value is: "
+  println value1
 
-  if u == "67"
-    repeat 5
-      increment anger
+  if value == 21
+    println "noice"
 
-    print "(You have made him "
-    print anger
-    println "% angry.)"
+println "done counting to 100"
 
-repeat 1000000000
-  print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+repeat 100:
+  print "A"
+
+set u to ""
+prompt "enter your name: " -> u
+
+repeat 9
+  print u
+
+println ""
+
+set number1 to 6
+set number2 to 2
+
+calculate number1/number2 -> number3
+
+print "Is 2.01 greater than "
+print number3
+println "?"
+
+if 2.01 > number3
+  println "yes"
+if number3 > 2.01
+  println "no"
