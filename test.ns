@@ -15,7 +15,7 @@ while value1 > value2
 
 println "done counting to 100"
 
-repeat 100:
+repeat 100
   print "A"
 
 set u to ""
