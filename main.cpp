@@ -13,7 +13,7 @@ using namespace std;
 using bytecode = vector<tuple<int, int, vector<any>>>;
 
 vector<string> keywords = {
-  "println", "print", "prompt", "repeat", "set", "increment", "while"
+  "println", "print", "prompt", "repeat", "set", "increment", "while", "if"
 };
 
 string f;
@@ -171,6 +171,13 @@ bytecode compile(string fin){
         args.push_back(vq);
         break;
       }
+      case 8: {
+        auto [vn, va, vq] = parseBool(ln.erase(0, off + (sp / 2)));
+        args.push_back(vn);
+        args.push_back(va);
+        args.push_back(vq);
+        break;
+      }
     }
 
     cd.push_back({op, (sp / 2), args});
@@ -192,6 +199,39 @@ any evalArg(const any& arg){
 
 void exec(const bytecode& cd, size_t& pc){
   auto [op, sp, args] = cd[pc];
+
+  auto compareValues = [](const auto& lv, const auto& rv, uint8_t op) -> bool {
+    switch(op){
+      case 0: return lv > rv;
+      case 1: return lv < rv;
+      case 2: return lv == rv;
+      case 3: return lv != rv;
+      case 4: return lv >= rv;
+      case 5: return lv <= rv;
+    }
+    return false;
+  };
+
+  auto evaluateCondition = [&](const auto& args) -> bool {
+    auto l = evalArg(args[0]);
+    uint8_t op = any_cast<uint8_t>(args[1]);
+    auto r = evalArg(args[2]);
+
+    if(l.type() == typeid(float) && r.type() == typeid(float)){
+      return compareValues(any_cast<float>(l), any_cast<float>(r), op);
+    }else if(l.type() == typeid(std::string) && r.type() == typeid(std::string)){
+      return compareValues(any_cast<const std::string&>(l), any_cast<const std::string&>(r), op);
+    }
+    return false;
+  };
+
+  auto executeBlock = [&](size_t s_pc, size_t e_pc) {
+    size_t ip = s_pc;
+    while(ip < e_pc){
+      exec(cd, ip);
+      ip++;
+    }
+  };
 
   switch(op){
     case 1: { // println
@@ -245,41 +285,19 @@ void exec(const bytecode& cd, size_t& pc){
       size_t e_pc = s_pc;
       while(e_pc < cd.size() && get<1>(cd[e_pc]) > sp) e_pc++;
 
-      auto evaluateCondition = [&]() -> bool {
-        auto l = evalArg(args[0]);
-        uint8_t op = any_cast<uint8_t>(args[1]);
-        auto r = evalArg(args[2]);
+      while(evaluateCondition(args)){
+        executeBlock(s_pc, e_pc);
+      }
+      pc = e_pc - 1;
+      break;
+    }
+    case 8: { // if
+      size_t s_pc = pc + 1;
+      size_t e_pc = s_pc;
+      while(e_pc < cd.size() && get<1>(cd[e_pc]) > sp) e_pc++;
 
-        if(l.type() == typeid(float) && r.type() == typeid(float)){
-          float lv = any_cast<float>(l), rv = any_cast<float>(r);
-          switch(op){
-            case 0: return lv > rv;
-            case 1: return lv < rv;
-            case 2: return lv == rv;
-            case 3: return lv != rv;
-            case 4: return lv >= rv;
-            case 5: return lv <= rv;
-          }
-        }else if(l.type() == typeid(std::string) && r.type() == typeid(std::string)){
-          std::string lv = any_cast<std::string>(l), rv = any_cast<std::string>(r);
-          switch(op){
-            case 0: return lv > rv;
-            case 1: return lv < rv;
-            case 2: return lv == rv;
-            case 3: return lv != rv;
-            case 4: return lv >= rv;
-            case 5: return lv <= rv;
-          }
-        }
-        return false;
-      };
-
-      while(evaluateCondition()){
-        size_t ip = s_pc;
-        while(ip < e_pc){
-          exec(cd, ip);
-          ip++;
-        }
+      if(evaluateCondition(args)){
+        executeBlock(s_pc, e_pc);
       }
       pc = e_pc - 1;
       break;

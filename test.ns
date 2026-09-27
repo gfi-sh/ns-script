@@ -4,17 +4,15 @@ println "every time you say 67. i will get mad. don't say it."
 set anger to 0
 
 while anger < 100
-  set u to ""
-  while u != "67"
-    prompt "scream at me: " -> u
-  println "grr..."
+  prompt "scream at me: " -> u
 
-  repeat 5
-    increment anger
+  if u == "67"
+    repeat 5
+      increment anger
 
-  print "(You have made him "
-  print anger
-  println "% angry.)"
+    print "(You have made him "
+    print anger
+    println "% angry.)"
 
 repeat 1000000000
   print "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
