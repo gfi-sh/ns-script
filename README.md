@@ -4,7 +4,18 @@ peak interpreted programming language written in C++
 ## usage
 
 ```bash
-g++ main.cpp -o main
+g++ main.cpp -o ns
+```
+
+```bash
+# run a file
+./ns script.ns
+
+# repl
+./ns
+
+# run code directly
+./ns -c "println \"Hello, World!\""
 ```
 
 ## syntax
