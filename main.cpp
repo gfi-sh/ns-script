@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -17,7 +18,7 @@ vector<string> keywords = {
 };
 
 string f;
-int lc;
+int lc = -1;
 
 pair<int, size_t> kwMatch(string_view text, size_t pos){
   pos = text.find_first_not_of(" \t", pos);
@@ -33,7 +34,7 @@ pair<int, size_t> kwMatch(string_view text, size_t pos){
 
 void throwErr(string e){
   cerr << f << ":" << (lc + 1) << ": " << e << "\n";
-  exit(1);
+  if(f!="repl"){exit(1);}
 }
 
 pair<string, int> spMatch(const string& str, size_t pos){
@@ -86,17 +87,10 @@ tuple<any, uint8_t, any> parseBool(string str){
   return {parseExp(vz), operand, parseExp(vq)};
 }
 
-bytecode compile(string fin){
+bytecode compile(string fin, istream& ifs){
   f = fin;
-  ifstream ifs(fin);
-
-  if(!ifs.is_open()){
-    cerr << "file does not exist?\n";
-    exit(1);
-  }
 
   bytecode cd;
-  lc = -1;
   string ln;
 
   while(getline(ifs, ln)){
@@ -313,10 +307,41 @@ void run(const bytecode& cd){
 
 int main(int argc, char* argv[]){
   if(argc < 2){
-    cerr << "a file is required\n";
+    while(1){
+      cout << "ns-script repl\n% ";
+      string line;
+      string lines;
+      while(getline(cin, line)){
+        if(line == ""){
+          istringstream rstr(lines);
+          run(compile("repl", rstr));
+          lines = "";
+        }else{
+          lines += line + "\n";
+        }
+        cout << "% ";
+      }
+    }
     return 1;
   }
 
-  run(compile(argv[1]));
+  if(string_view(argv[1]) == "-c"){
+    if(argc < 3){
+      cerr << "provide code to run\n";
+      return 1;
+    }
+    istringstream rstr(argv[2]);
+    run(compile("repl", rstr));
+    return 0;
+  }
+
+  ifstream ifs(argv[1]);
+
+  if(!ifs.is_open()){
+    cerr << "file does not exist?\n";
+    exit(1);
+  }
+
+  run(compile(argv[1], ifs));
   return 0;
 }
