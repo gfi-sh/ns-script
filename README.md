@@ -22,6 +22,9 @@ while value1 > value2
   print "The current value is: "
   println value1
 
+  if value == 21
+    println "noice"
+
 println "done counting to 100"
 
 repeat 100:
